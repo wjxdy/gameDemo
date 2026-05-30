@@ -62,29 +62,6 @@ export function createPixelTextures(scene: Phaser.Scene): void {
     { x: 8, y: 2, w: 20, h: 10, color: 0x0f172a },
   ]);
 
-  drawTexture(scene, 'hero', 28, 34, [
-    { x: 9, y: 1, w: 12, h: 6, color: 0xef4444 },
-    { x: 7, y: 7, w: 16, h: 8, color: 0xffd7a3 },
-    { x: 10, y: 9, w: 3, h: 3, color: 0x111827 },
-    { x: 17, y: 9, w: 3, h: 3, color: 0x111827 },
-    { x: 8, y: 16, w: 14, h: 12, color: 0x1f2937 },
-    { x: 5, y: 18, w: 5, h: 9, color: 0x334155 },
-    { x: 21, y: 18, w: 5, h: 9, color: 0x334155 },
-    { x: 10, y: 28, w: 5, h: 5, color: 0x111827 },
-    { x: 17, y: 28, w: 5, h: 5, color: 0x111827 },
-    { x: 12, y: 17, w: 7, h: 5, color: 0xe5e7eb },
-  ]);
-
-  drawTexture(scene, 'hero-attack', 46, 34, [
-    { x: 9, y: 1, w: 12, h: 6, color: 0xef4444 },
-    { x: 7, y: 7, w: 16, h: 8, color: 0xffd7a3 },
-    { x: 8, y: 16, w: 14, h: 12, color: 0x1f2937 },
-    { x: 22, y: 17, w: 7, h: 5, color: 0x334155 },
-    { x: 29, y: 15, w: 12, h: 4, color: 0xf8fafc },
-    { x: 10, y: 28, w: 5, h: 5, color: 0x111827 },
-    { x: 17, y: 28, w: 5, h: 5, color: 0x111827 },
-  ]);
-
   drawTexture(scene, 'slime', 30, 24, [
     { x: 4, y: 10, w: 22, h: 10, color: 0x38bdf8 },
     { x: 8, y: 5, w: 14, h: 16, color: 0x0ea5e9 },
@@ -110,4 +87,3 @@ export function createPixelTextures(scene: Phaser.Scene): void {
     { x: 25, y: 6, w: 4, h: 4, color: 0xbae6fd },
   ]);
 }
-

@@ -47,6 +47,7 @@ export class PixelRpgScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.load.image('hero', '/assets/hero.png');
     createPixelTextures(this);
   }
 
@@ -133,8 +134,9 @@ export class PixelRpgScene extends Phaser.Scene {
   private createPlayer(): void {
     this.add.image(150, 450, 'shadow').setDepth(8);
     this.player = this.physics.add.sprite(150, 450, 'hero').setDepth(10);
+    this.player.setDisplaySize(32, 32);
     this.player.setCollideWorldBounds(true);
-    this.player.body?.setSize(18, 20).setOffset(5, 13);
+    this.player.body?.setSize(16, 18).setOffset(8, 12);
     this.physics.add.collider(this.player, this.obstacles);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
   }
@@ -273,8 +275,8 @@ export class PixelRpgScene extends Phaser.Scene {
       return;
     }
     this.lastPlayerAttackAt = time;
-    this.player.setTexture('hero-attack');
-    this.time.delayedCall(130, () => this.player.setTexture('hero'));
+    this.player.setScale(1.08);
+    this.time.delayedCall(100, () => this.player.setScale(1));
 
     const attackPoint = this.getAttackPoint();
     const slash = this.add.image(attackPoint.x, attackPoint.y, 'slash').setDepth(30);
