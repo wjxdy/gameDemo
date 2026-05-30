@@ -48,6 +48,10 @@ export class PixelRpgScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image('hero', '/assets/hero.png');
+    this.load.spritesheet('hero-walk', '/assets/hero_walk_16.png', {
+      frameWidth: 28,
+      frameHeight: 28,
+    });
     createPixelTextures(this);
   }
 
@@ -62,6 +66,7 @@ export class PixelRpgScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#14532d');
 
     this.createMap();
+    this.createAnimations();
     this.createPlayer();
     this.createEnemies();
     this.createUi();
@@ -133,12 +138,25 @@ export class PixelRpgScene extends Phaser.Scene {
 
   private createPlayer(): void {
     this.add.image(150, 450, 'shadow').setDepth(8);
-    this.player = this.physics.add.sprite(150, 450, 'hero').setDepth(10);
+    this.player = this.physics.add.sprite(150, 450, 'hero-walk', 0).setDepth(10);
     this.player.setDisplaySize(32, 32);
     this.player.setCollideWorldBounds(true);
     this.player.body?.setSize(16, 18).setOffset(8, 12);
     this.physics.add.collider(this.player, this.obstacles);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+  }
+
+  private createAnimations(): void {
+    if (this.anims.exists('hero-walk')) {
+      return;
+    }
+
+    this.anims.create({
+      key: 'hero-walk',
+      frames: this.anims.generateFrameNumbers('hero-walk', { start: 0, end: 15 }),
+      frameRate: 10,
+      repeat: -1,
+    });
   }
 
   private createEnemies(): void {
@@ -268,6 +286,12 @@ export class PixelRpgScene extends Phaser.Scene {
     velocity.normalize().scale(PLAYER_SPEED);
     this.player.setVelocity(velocity.x, velocity.y);
     this.player.setFlipX(this.facing === 'left');
+    if (velocity.lengthSq() > 0) {
+      this.player.play('hero-walk', true);
+    } else {
+      this.player.stop();
+      this.player.setFrame(0);
+    }
   }
 
   private performPlayerAttack(time: number): void {
