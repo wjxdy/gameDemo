@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { PixelRpgScene } from './game/PixelRpgScene';
 import './style.css';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -15,8 +16,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [],
+  scene: [PixelRpgScene],
 };
 
 new Phaser.Game(config);
-
