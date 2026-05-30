@@ -28,7 +28,7 @@ type EnemyActor = {
 
 export class PixelRpgScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private wasd!: Record<'a' | 'd' | 's' | 'w', Phaser.Input.Keyboard.Key>;
+  private wasd!: Record<'A' | 'D' | 'S' | 'W', Phaser.Input.Keyboard.Key>;
   private attackKey!: Phaser.Input.Keyboard.Key;
   private player!: Phaser.Physics.Arcade.Sprite;
   private obstacles!: Phaser.Physics.Arcade.StaticGroup;
@@ -228,7 +228,7 @@ export class PixelRpgScene extends Phaser.Scene {
     }
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys('W,A,S,D') as Record<
-      'a' | 'd' | 's' | 'w',
+      'A' | 'D' | 'S' | 'W',
       Phaser.Input.Keyboard.Key
     >;
     this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -240,10 +240,10 @@ export class PixelRpgScene extends Phaser.Scene {
   }
 
   private updatePlayerMovement(): void {
-    const left = this.cursors.left.isDown || this.wasd.a.isDown;
-    const right = this.cursors.right.isDown || this.wasd.d.isDown;
-    const up = this.cursors.up.isDown || this.wasd.w.isDown;
-    const down = this.cursors.down.isDown || this.wasd.s.isDown;
+    const left = this.cursors.left.isDown || this.wasd.A.isDown;
+    const right = this.cursors.right.isDown || this.wasd.D.isDown;
+    const up = this.cursors.up.isDown || this.wasd.W.isDown;
+    const down = this.cursors.down.isDown || this.wasd.S.isDown;
     const velocity = new Phaser.Math.Vector2(0, 0);
 
     if (left) {

@@ -4,3 +4,5 @@ dist/
 .vite/
 .pnpm-store/
 .superpowers/
+.playwright-mcp/
+pixel-rpg-demo.png
