@@ -285,7 +285,7 @@ export class PixelRpgScene extends Phaser.Scene {
 
     velocity.normalize().scale(PLAYER_SPEED);
     this.player.setVelocity(velocity.x, velocity.y);
-    this.player.setFlipX(this.facing === 'left');
+    this.player.setFlipX(this.facing === 'right');
     if (velocity.lengthSq() > 0) {
       this.player.play('hero-walk', true);
     } else {
