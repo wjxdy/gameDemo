@@ -26,6 +26,14 @@ type EnemyActor = {
   hpBar: Phaser.GameObjects.Graphics;
 };
 
+const HERO_DISPLAY_SIZE = 40;
+const MINIMAP = {
+  x: 760,
+  y: 18,
+  width: 176,
+  height: 112,
+};
+
 export class PixelRpgScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<'A' | 'D' | 'S' | 'W', Phaser.Input.Keyboard.Key>;
@@ -41,6 +49,7 @@ export class PixelRpgScene extends Phaser.Scene {
   private statusText!: Phaser.GameObjects.Text;
   private bossText!: Phaser.GameObjects.Text;
   private overlay!: Phaser.GameObjects.Container;
+  private minimap!: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('PixelRpgScene');
@@ -89,7 +98,9 @@ export class PixelRpgScene extends Phaser.Scene {
   private createMap(): void {
     for (let y = 0; y < WORLD_HEIGHT; y += 32) {
       for (let x = 0; x < WORLD_WIDTH; x += 32) {
-        const key = y > 380 && y < 540 && x > 120 && x < 1320 ? 'tile-path' : 'tile-grass';
+        const onMainPath = y > 570 && y < 750 && x > 120 && x < 1840;
+        const onBossPath = x > 1650 && x < 1890 && y > 740 && y < 1090;
+        const key = onMainPath || onBossPath ? 'tile-path' : 'tile-grass';
         this.add.image(x + 16, y + 16, key).setOrigin(0.5);
       }
     }
@@ -102,11 +113,23 @@ export class PixelRpgScene extends Phaser.Scene {
       { x: 760, y: 110 },
       { x: 1180, y: 145 },
       { x: 1450, y: 130 },
-      { x: 210, y: 740 },
-      { x: 520, y: 790 },
-      { x: 910, y: 760 },
-      { x: 1320, y: 730 },
-      { x: 1510, y: 780 },
+      { x: 1720, y: 120 },
+      { x: 2040, y: 170 },
+      { x: 210, y: 940 },
+      { x: 520, y: 990 },
+      { x: 910, y: 960 },
+      { x: 1320, y: 930 },
+      { x: 1510, y: 980 },
+      { x: 1860, y: 1220 },
+      { x: 2040, y: 1160 },
+      { x: 320, y: 1240 },
+      { x: 760, y: 1260 },
+      { x: 1160, y: 1240 },
+      { x: 430, y: 360 },
+      { x: 680, y: 320 },
+      { x: 960, y: 360 },
+      { x: 1320, y: 350 },
+      { x: 1710, y: 420 },
     ];
 
     for (const pos of treePositions) {
@@ -115,10 +138,15 @@ export class PixelRpgScene extends Phaser.Scene {
     }
 
     const rockPositions: Point[] = [
-      { x: 430, y: 315 },
-      { x: 610, y: 600 },
-      { x: 1010, y: 305 },
-      { x: 1240, y: 565 },
+      { x: 430, y: 505 },
+      { x: 610, y: 815 },
+      { x: 1010, y: 500 },
+      { x: 1240, y: 825 },
+      { x: 1480, y: 500 },
+      { x: 1760, y: 890 },
+      { x: 1980, y: 720 },
+      { x: 720, y: 1040 },
+      { x: 1080, y: 1080 },
     ];
 
     for (const pos of rockPositions) {
@@ -127,9 +155,9 @@ export class PixelRpgScene extends Phaser.Scene {
     }
 
     this.add
-      .rectangle(1350, 470, 280, 220, 0x7f1d1d, 0.18)
+      .rectangle(1930, 1030, 320, 250, 0x7f1d1d, 0.18)
       .setStrokeStyle(3, 0xef4444, 0.55);
-    this.add.text(1240, 345, 'BOSS GROVE', {
+    this.add.text(1800, 870, 'BOSS GROVE', {
       color: '#fecaca',
       fontFamily: 'monospace',
       fontSize: '18px',
@@ -137,11 +165,11 @@ export class PixelRpgScene extends Phaser.Scene {
   }
 
   private createPlayer(): void {
-    this.add.image(150, 450, 'shadow').setDepth(8);
-    this.player = this.physics.add.sprite(150, 450, 'hero-walk', 0).setDepth(10);
-    this.player.setDisplaySize(32, 32);
+    this.add.image(180, 660, 'shadow').setDepth(8).setDisplaySize(42, 16);
+    this.player = this.physics.add.sprite(180, 660, 'hero-walk', 0).setDepth(10);
+    this.player.setDisplaySize(HERO_DISPLAY_SIZE, HERO_DISPLAY_SIZE);
     this.player.setCollideWorldBounds(true);
-    this.player.body?.setSize(16, 18).setOffset(8, 12);
+    this.player.body?.setSize(20, 22).setOffset(10, 14);
     this.physics.add.collider(this.player, this.obstacles);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
   }
@@ -161,10 +189,12 @@ export class PixelRpgScene extends Phaser.Scene {
 
   private createEnemies(): void {
     const configs: EnemyConfig[] = [
-      { kind: 'slime', x: 620, y: 420, maxHealth: 45, damage: 8, speed: 80, chaseRadius: 250 },
-      { kind: 'slime', x: 820, y: 610, maxHealth: 45, damage: 8, speed: 80, chaseRadius: 250 },
-      { kind: 'slime', x: 980, y: 300, maxHealth: 55, damage: 10, speed: 75, chaseRadius: 260 },
-      { kind: 'boss', x: 1370, y: 470, maxHealth: 180, damage: 18, speed: 62, chaseRadius: 360 },
+      { kind: 'slime', x: 620, y: 640, maxHealth: 45, damage: 8, speed: 80, chaseRadius: 250 },
+      { kind: 'slime', x: 900, y: 840, maxHealth: 45, damage: 8, speed: 80, chaseRadius: 250 },
+      { kind: 'slime', x: 1180, y: 560, maxHealth: 55, damage: 10, speed: 75, chaseRadius: 260 },
+      { kind: 'slime', x: 1520, y: 700, maxHealth: 55, damage: 10, speed: 78, chaseRadius: 270 },
+      { kind: 'slime', x: 1760, y: 980, maxHealth: 65, damage: 11, speed: 74, chaseRadius: 280 },
+      { kind: 'boss', x: 1940, y: 1040, maxHealth: 180, damage: 18, speed: 62, chaseRadius: 360 },
     ];
 
     for (const config of configs) {
@@ -221,6 +251,8 @@ export class PixelRpgScene extends Phaser.Scene {
       })
       .setScrollFactor(0)
       .setDepth(100);
+
+    this.minimap = this.add.graphics().setScrollFactor(0).setDepth(110);
 
     this.overlay = this.add.container(480, 320).setScrollFactor(0).setDepth(200).setVisible(false);
     const panel = this.add.rectangle(0, 0, 500, 190, 0x020617, 0.9).setStrokeStyle(3, 0x94a3b8);
@@ -299,8 +331,10 @@ export class PixelRpgScene extends Phaser.Scene {
       return;
     }
     this.lastPlayerAttackAt = time;
-    this.player.setScale(1.08);
-    this.time.delayedCall(100, () => this.player.setScale(1));
+    this.player.setDisplaySize(43, 43);
+    this.time.delayedCall(100, () =>
+      this.player.setDisplaySize(HERO_DISPLAY_SIZE, HERO_DISPLAY_SIZE),
+    );
 
     const attackPoint = this.getAttackPoint();
     const slash = this.add.image(attackPoint.x, attackPoint.y, 'slash').setDepth(30);
@@ -377,13 +411,58 @@ export class PixelRpgScene extends Phaser.Scene {
     const remainingMonsters = this.enemies.filter(
       (enemy) => enemy.kind === 'slime' && isAlive(enemy.hp),
     ).length;
-    this.statusText.setText(`Monsters ${remainingMonsters}/3  Space: Attack  R: Restart after end`);
+    const totalMonsters = this.enemies.filter((enemy) => enemy.kind === 'slime').length;
+    this.statusText.setText(
+      `Monsters ${remainingMonsters}/${totalMonsters}  Space: Attack  R: Restart after end`,
+    );
     const boss = this.enemies.find((enemy) => enemy.kind === 'boss');
     if (boss && isAlive(boss.hp)) {
       this.bossText.setText(`Boss HP ${boss.hp}/${boss.maxHp}`);
     } else {
       this.bossText.setText('');
     }
+    this.drawMinimap();
+  }
+
+  private drawMinimap(): void {
+    this.minimap.clear();
+    this.minimap.fillStyle(0x020617, 0.78).fillRect(
+      MINIMAP.x,
+      MINIMAP.y,
+      MINIMAP.width,
+      MINIMAP.height,
+    );
+    this.minimap.lineStyle(2, 0x94a3b8, 0.95).strokeRect(
+      MINIMAP.x,
+      MINIMAP.y,
+      MINIMAP.width,
+      MINIMAP.height,
+    );
+
+    const bossX = this.mapToMinimapX(1770);
+    const bossY = this.mapToMinimapY(905);
+    const bossW = (320 / WORLD_WIDTH) * MINIMAP.width;
+    const bossH = (250 / WORLD_HEIGHT) * MINIMAP.height;
+    this.minimap.fillStyle(0x7f1d1d, 0.75).fillRect(bossX, bossY, bossW, bossH);
+
+    for (const enemy of this.enemies) {
+      if (!isAlive(enemy.hp)) {
+        continue;
+      }
+      const color = enemy.kind === 'boss' ? 0xef4444 : 0x38bdf8;
+      const size = enemy.kind === 'boss' ? 5 : 3;
+      this.minimap.fillStyle(color, 1).fillCircle(
+        this.mapToMinimapX(enemy.sprite.x),
+        this.mapToMinimapY(enemy.sprite.y),
+        size,
+      );
+    }
+
+    this.minimap.fillStyle(0xf8fafc, 1).fillCircle(
+      this.mapToMinimapX(this.player.x),
+      this.mapToMinimapY(this.player.y),
+      4,
+    );
   }
 
   private drawEnemyHealth(enemy: EnemyActor): void {
@@ -427,5 +506,13 @@ export class PixelRpgScene extends Phaser.Scene {
 
   private spritePoint(sprite: Phaser.GameObjects.Components.Transform): Point {
     return { x: sprite.x, y: sprite.y };
+  }
+
+  private mapToMinimapX(worldX: number): number {
+    return MINIMAP.x + (worldX / WORLD_WIDTH) * MINIMAP.width;
+  }
+
+  private mapToMinimapY(worldY: number): number {
+    return MINIMAP.y + (worldY / WORLD_HEIGHT) * MINIMAP.height;
   }
 }
