@@ -2,17 +2,16 @@ import Phaser from 'phaser';
 import {
   ENEMY_ATTACK_COOLDOWN_MS,
   ENEMY_ATTACK_RANGE,
-  PLAYER_ATTACK_COOLDOWN_MS,
-  PLAYER_ATTACK_RANGE,
-  PLAYER_DAMAGE,
   PLAYER_MAX_HEALTH,
   PLAYER_SPEED,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from './constants';
+import { getAttackPoint, getWeaponSwingConfig } from './attack';
 import { applyDamage, canAttackAt, isAlive, isInAttackRange } from './combat';
 import { createPixelTextures } from './sprites';
 import type { EnemyConfig, Facing, GameOutcome, Point } from './types';
+import { BASIC_SWORD, type Weapon } from './weapons';
 
 type EnemyActor = {
   sprite: Phaser.Physics.Arcade.Sprite;
@@ -41,9 +40,11 @@ export class PixelRpgScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private obstacles!: Phaser.Physics.Arcade.StaticGroup;
   private enemies: EnemyActor[] = [];
+  private equippedWeapon: Weapon = BASIC_SWORD;
   private facing: Facing = 'down';
   private playerHp = PLAYER_MAX_HEALTH;
-  private lastPlayerAttackAt = -PLAYER_ATTACK_COOLDOWN_MS;
+  private lastPlayerAttackAt = -BASIC_SWORD.cooldownMs;
+  private isPlayerAttacking = false;
   private outcome: GameOutcome = 'playing';
   private hpText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
@@ -61,13 +62,16 @@ export class PixelRpgScene extends Phaser.Scene {
       frameWidth: 28,
       frameHeight: 28,
     });
+    this.load.image(BASIC_SWORD.textureKey, BASIC_SWORD.assetPath);
     createPixelTextures(this);
   }
 
   create(): void {
     this.outcome = 'playing';
     this.playerHp = PLAYER_MAX_HEALTH;
-    this.lastPlayerAttackAt = -PLAYER_ATTACK_COOLDOWN_MS;
+    this.equippedWeapon = BASIC_SWORD;
+    this.isPlayerAttacking = false;
+    this.lastPlayerAttackAt = -this.equippedWeapon.cooldownMs;
     this.enemies = [];
 
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -318,42 +322,43 @@ export class PixelRpgScene extends Phaser.Scene {
     velocity.normalize().scale(PLAYER_SPEED);
     this.player.setVelocity(velocity.x, velocity.y);
     this.player.setFlipX(this.facing === 'right');
-    if (velocity.lengthSq() > 0) {
-      this.player.play('hero-walk', true);
-    } else {
-      this.player.stop();
-      this.player.setFrame(0);
+    if (!this.isPlayerAttacking) {
+      if (velocity.lengthSq() > 0) {
+        this.player.play('hero-walk', true);
+      } else {
+        this.player.stop();
+        this.player.setFrame(0);
+      }
     }
   }
 
   private performPlayerAttack(time: number): void {
-    if (!canAttackAt(time, this.lastPlayerAttackAt, PLAYER_ATTACK_COOLDOWN_MS)) {
+    if (!canAttackAt(time, this.lastPlayerAttackAt, this.equippedWeapon.cooldownMs)) {
       return;
     }
     this.lastPlayerAttackAt = time;
+    this.isPlayerAttacking = true;
     this.player.setDisplaySize(43, 43);
-    this.time.delayedCall(100, () =>
-      this.player.setDisplaySize(HERO_DISPLAY_SIZE, HERO_DISPLAY_SIZE),
-    );
-
-    const attackPoint = this.getAttackPoint();
-    const slash = this.add.image(attackPoint.x, attackPoint.y, 'slash').setDepth(30);
-    slash.setAngle(this.facing === 'up' ? -35 : this.facing === 'down' ? 145 : 0);
-    slash.setFlipX(this.facing === 'left');
-    this.tweens.add({
-      targets: slash,
-      alpha: 0,
-      duration: 150,
-      onComplete: () => slash.destroy(),
+    this.player.stop();
+    this.time.delayedCall(this.equippedWeapon.swingMs, () => {
+      this.player.setDisplaySize(HERO_DISPLAY_SIZE, HERO_DISPLAY_SIZE);
+      this.isPlayerAttacking = false;
     });
+    this.playWeaponSwing();
+
+    const attackPoint = getAttackPoint(
+      this.spritePoint(this.player),
+      this.facing,
+      this.equippedWeapon.range,
+    );
 
     for (const enemy of this.enemies) {
       if (!isAlive(enemy.hp)) {
         continue;
       }
       const target = this.spritePoint(enemy.sprite);
-      if (isInAttackRange(attackPoint, target, PLAYER_ATTACK_RANGE)) {
-        enemy.hp = applyDamage(enemy.hp, PLAYER_DAMAGE);
+      if (isInAttackRange(attackPoint, target, this.equippedWeapon.range)) {
+        enemy.hp = applyDamage(enemy.hp, this.equippedWeapon.damage);
         enemy.sprite.setTint(0xffffff);
         this.time.delayedCall(80, () => enemy.sprite.clearTint());
         if (!isAlive(enemy.hp)) {
@@ -365,6 +370,25 @@ export class PixelRpgScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  private playWeaponSwing(): void {
+    const swing = getWeaponSwingConfig(this.facing);
+    const sword = this.add
+      .image(this.player.x + swing.x, this.player.y + swing.y, this.equippedWeapon.textureKey)
+      .setDepth(35)
+      .setDisplaySize(52, 18)
+      .setAngle(swing.startAngle)
+      .setFlipX(swing.flipX);
+
+    this.tweens.add({
+      targets: sword,
+      angle: swing.endAngle,
+      alpha: 0.85,
+      duration: this.equippedWeapon.swingMs,
+      ease: 'Quad.easeOut',
+      onComplete: () => sword.destroy(),
+    });
   }
 
   private updateEnemies(time: number): void {
@@ -487,21 +511,6 @@ export class PixelRpgScene extends Phaser.Scene {
     const title = this.overlay.getByName('title') as Phaser.GameObjects.Text;
     title.setText(outcome === 'victory' ? 'Boss defeated' : 'You died');
     this.overlay.setVisible(true);
-  }
-
-  private getAttackPoint(): Point {
-    const origin = this.spritePoint(this.player);
-    const offset = 34;
-    if (this.facing === 'left') {
-      return { x: origin.x - offset, y: origin.y };
-    }
-    if (this.facing === 'right') {
-      return { x: origin.x + offset, y: origin.y };
-    }
-    if (this.facing === 'up') {
-      return { x: origin.x, y: origin.y - offset };
-    }
-    return { x: origin.x, y: origin.y + offset };
   }
 
   private spritePoint(sprite: Phaser.GameObjects.Components.Transform): Point {
