@@ -16,7 +16,7 @@ export const BASIC_SWORD: Weapon = {
   range: 56,
   cooldownMs: 360,
   textureKey: 'weapon-basic-sword',
-  assetPath: '/assets/weapons/basic-sword.png',
+  assetPath: 'assets/weapons/basic-sword.png',
   swingMs: 140,
 };
 
@@ -29,4 +29,3 @@ export type WeaponId = keyof typeof WEAPONS;
 export function getWeapon(id: WeaponId): Weapon {
   return WEAPONS[id];
 }
-

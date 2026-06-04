@@ -57,8 +57,8 @@ export class PixelRpgScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.image('hero', '/assets/hero.png');
-    this.load.spritesheet('hero-walk', '/assets/hero_walk_16.png', {
+    this.load.image('hero', 'assets/hero.png');
+    this.load.spritesheet('hero-walk', 'assets/hero_walk_16.png', {
       frameWidth: 28,
       frameHeight: 28,
     });

@@ -10,7 +10,7 @@ describe('weapon registry', () => {
       range: 56,
       cooldownMs: 360,
       textureKey: 'weapon-basic-sword',
-      assetPath: '/assets/weapons/basic-sword.png',
+      assetPath: 'assets/weapons/basic-sword.png',
       swingMs: 140,
     });
   });
@@ -20,4 +20,3 @@ describe('weapon registry', () => {
     expect(WEAPONS.basic_sword).toBe(BASIC_SWORD);
   });
 });
-
